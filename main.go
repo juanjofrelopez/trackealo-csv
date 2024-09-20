@@ -205,11 +205,13 @@ func main() {
 	}
 
 	// dollarQuote := CalculateDollarQuote()
-	resultsTable := ResultsTable{years: 0}
+	resultsTable := ResultsTable{years: 0, totalCost: 0}
 
 	for _, v := range entries {
+		// calculate bought price in usd
 		boughtPriceUSD := v.price * ratios.GetTickerRatio(v.ticker) / v.dollarQuote
 
+		// calculate yield for this stock and add it
 		var newResult float64
 		if quotes[v.ticker] == 0 {
 			newResult = 0
@@ -221,8 +223,10 @@ func main() {
 		// for merval
 		// newResult := ( ( quotes[v.ticker] / todayUSDRate ) / boughtPriceUSD) - 1
 
+		// calculate cagr
 		years := time.Since(v.date).Hours() / hoursInAYear
 		cagr := math.Pow((newResult+1), 1/years) - 1
+		// calculate total years
 		resultsTable.years = math.Max(years, resultsTable.years)
 
 		newEntry := ResultsEntry{
@@ -231,10 +235,12 @@ func main() {
 			cost:        v.price * float64(v.quantity),
 			quantity:    int(v.quantity),
 			dollarQuote: v.dollarQuote,
-			result:      newResult,
-			cagr:        cagr,
+			result:      newResult, // <---------
+			cagr:        cagr,      // <---------
 		}
 		resultsTable.entries = append(resultsTable.entries, newEntry)
+
+		// calculate portfolio total
 		todaysTotal := (quotes[v.ticker] / ratios.GetTickerRatio(v.ticker)) * float64(v.quantity)
 		resultsTable.totalToday += todaysTotal
 	}
@@ -251,5 +257,4 @@ func main() {
 
 	resultsTable.totalResult = ((resultsTable.totalToday / resultsTable.totalCost) - 1)
 	printResultTable(resultsTable)
-
 }
